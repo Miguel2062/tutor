@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="robots" content="noindex">
+<title>Tutor de estudio</title>
+<style>
+  :root {
+    --fondo: #0f1222; --panel: #181c33; --texto: #eef0ff; --suave: #9aa0c3;
+    --teal: #19c3b1; --violeta: #7c5cff; --ambar: #ffb547; --burbuja-yo: #2a2f55;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--fondo); color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .app { display: flex; flex-direction: column; height: 100vh; max-width: 640px; margin: 0 auto; }
+  .oculto { display: none !important; }
+
+  /* --- Avatar Pac-Man --- */
+  .cabecera { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    background: linear-gradient(180deg, #1b2042, var(--fondo)); }
+  .cabecera.grande { flex-direction: column; padding-top: 28px; }
+  .avatar { width: 84px; height: 84px; flex: none; }
+  .cabecera.grande .avatar { width: 170px; height: 170px; }
+  .nombre { font-weight: 700; font-size: 18px; }
+  .estado-txt { color: var(--suave); font-size: 13px; }
+
+  /* Pac-Man flota siempre */
+  #pacman { animation: flotar 3s ease-in-out infinite; transform-origin: 90px 100px; }
+  @keyframes flotar { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+  .chispa { opacity: .0; }
+  /* Parpadeo natural cada ~4 segundos */
+  .ojo { animation: parpadear 4.2s infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes parpadear { 0%, 90%, 100% { transform: scaleY(1); } 93%, 96% { transform: scaleY(.08); } }
+  /* La boca se dibuja por JS (ver dibujarPacman): se abre y se cierra sola */
+  #puntos { opacity: 0; }
+  #zzz { opacity: 0; }
+  .punto-comida { opacity: 0; }
+  .fantasma { opacity: 0; }
+
+  /* pensando: mira hacia arriba, boca casi cerrada, puntitos ... */
+  .pensando .ojo { animation: none; transform: translateY(-5px); }
+  .pensando #puntos { opacity: 1; }
+  .pensando #puntos circle { animation: punto 1s infinite; }
+  .pensando #puntos circle:nth-child(2) { animation-delay: .2s; }
+  .pensando #puntos circle:nth-child(3) { animation-delay: .4s; }
+  @keyframes punto { 0%,100% { opacity: .2 } 50% { opacity: 1 } }
+
+  /* hablando: cabeza asiente, boca mastica rápido (lo hace el JS) */
+  .hablando #pacman { animation: flotar .7s ease-in-out infinite; }
+  .hablando .ojo { animation: none; }
+
+  /* celebra: salta, ojo feliz, chispas, y el fantasma huye */
+  .celebra #pacman { animation: saltar .6s ease-in-out 3; }
+  @keyframes saltar { 0%,100% { transform: translateY(0) rotate(0) } 40% { transform: translateY(-22px) rotate(-6deg) } 70% { transform: translateY(-10px) rotate(6deg) } }
+  .celebra .chispa { animation: chispazo 1.8s ease-out; }
+  @keyframes chispazo { 0% { opacity: 1; transform: scale(.2) } 100% { opacity: 0; transform: scale(1.6) } }
+  .celebra .ojo { animation: none; transform: scaleY(.35); }
+  .celebra .fantasma { opacity: 1; animation: huir 1.8s ease-out forwards; transform-box: fill-box; }
+  @keyframes huir { from { transform: translateX(0); } to { transform: translateX(28px) translateY(-6px); opacity: 0; } }
+
+  /* pausa: ojo cerrado, respiración lenta, Zzz */
+  .pausa .ojo { animation: none; transform: scaleY(.1); }
+  .pausa #pacman { animation-duration: 6s; }
+  .pausa #zzz { opacity: 1; animation: zzz 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes zzz { 0% { opacity: 0; transform: translateY(4px) scale(.8); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px) scale(1.1); } }
+
+  /* comiendo: aparecen los puntos y se los va comiendo uno a uno */
+  .comiendo .punto-comida { opacity: 1; animation: comerPunto .9s linear infinite; }
+  .comiendo .punto-comida:nth-child(2) { animation-delay: .3s; }
+  .comiendo .punto-comida:nth-child(3) { animation-delay: .6s; }
+  @keyframes comerPunto { 0% { transform: translateX(0); opacity: 1; } 70% { transform: translateX(-28px); opacity: 1; } 100% { transform: translateX(-34px); opacity: 0; } }
+  .comiendo .ojo { animation: none; transform: scaleY(.6); }
+
+  /* --- Pantallas --- */
+  .centro { padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  input[type=password], textarea { width: 100%; background: var(--panel); color: var(--texto);
+    border: 1px solid #2c3260; border-radius: 14px; padding: 12px 14px; font-size: 16px; font-family: inherit; }
+  input[type=password] { max-width: 220px; text-align: center; letter-spacing: 6px; }
+  button { font-family: inherit; font-size: 16px; border: 0; border-radius: 14px; cursor: pointer; }
+  .primario { background: var(--teal); color: #04201d; font-weight: 700; padding: 12px 22px; }
+  .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 420px; }
+  .chip { background: var(--panel); color: var(--texto); padding: 16px 10px; border: 1px solid #2c3260; font-weight: 600; }
+  .chip:active { background: var(--violeta); }
+  .error { color: #ff8a8a; min-height: 20px; }
+
+  /* --- Chat --- */
+  .chat { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 85%; padding: 10px 13px; border-radius: 16px; line-height: 1.42; font-size: 16px; white-space: pre-wrap; word-wrap: break-word; }
+  .tutor { background: var(--panel); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .yo { background: var(--burbuja-yo); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg img { max-width: 100%; border-radius: 10px; display: block; margin-bottom: 6px; }
+  .barra { display: flex; gap: 8px; padding: 10px; background: var(--panel); align-items: flex-end; }
+  .barra textarea { resize: none; max-height: 120px; }
+  .icono { background: #262b52; color: var(--texto); width: 46px; height: 46px; flex: none; font-size: 20px; }
+  .enviar { background: var(--teal); color: #04201d; }
+  .mic.grabando { background: #ff5d73; color: #fff; animation: latir 1s ease-in-out infinite; }
+  @keyframes latir { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
+  .escucha .ojo { animation: none; transform: scale(1.25); }
+  .acciones { display: flex; justify-content: space-between; padding: 4px 14px 8px; gap: 8px; }
+  .acciones button { background: transparent; color: var(--suave); font-size: 14px; padding: 6px 8px; }
+  .previa { padding: 6px 14px; color: var(--suave); font-size: 13px; }
+
+  /* --- Panel de papás --- */
+  #panelPapas { flex:1; overflow-y:auto; padding:12px 14px 30px; }
+  .pp-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .pp-top h1 { font-size:19px; margin:0; }
+  .pp-mini { font-size:13px; color:var(--suave); }
+  .pp-tabs { display:flex; gap:6px; overflow-x:auto; margin:12px 0 4px; }
+  .pp-tab { background:var(--panel); color:var(--suave); padding:8px 12px; font-size:14px; white-space:nowrap; border:1px solid #2c3260; }
+  .pp-tab.activa { background:var(--violeta); color:#fff; border-color:var(--violeta); }
+  .pp-card { background:var(--panel); border:1px solid #2c3260; border-radius:14px; padding:14px; margin-top:10px; }
+  .pp-card h2 { font-size:15px; margin:0 0 8px; }
+  .pp-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .pp-kpi { background:var(--fondo); border-radius:12px; padding:10px 4px; text-align:center; }
+  .pp-kpi b { display:block; font-size:21px; } .pp-kpi span { font-size:11px; color:var(--suave); }
+  .pp-item { padding:9px 0; border-top:1px solid #2c3260; } .pp-item:first-of-type { border-top:0; }
+  .pp-fila { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .pp-tag { display:inline-block; font-size:11px; padding:2px 8px; border-radius:99px; background:#2a2f55; color:#c9c2ff; font-weight:600; }
+  .pp-rojo { color:#ff8a9a; } .pp-amarillo { color:var(--ambar); } .pp-verde { color:#5fe0c8; }
+  .pp-borde-rojo { border-left:5px solid #ff5d73; } .pp-borde-amarillo { border-left:5px solid var(--ambar); } .pp-borde-verde { border-left:5px solid var(--teal); }
+  .pp-btn { background:#262b52; color:var(--texto); font-size:14px; padding:6px 10px; white-space:nowrap; }
+  .pp-btn.sel { background:var(--violeta); }
+  .pp-paso { display:flex; gap:10px; padding:8px 0; } .pp-paso > span { font-size:20px; }
+  #panelPapas table { width:100%; border-collapse:collapse; font-size:14px; }
+  #panelPapas td, #panelPapas th { text-align:left; padding:6px 4px; border-top:1px solid #2c3260; }
+  #panelPapas th { color:var(--suave); border-top:0; }
+  @media (max-width:420px) { .pp-kpis { grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="cabecera" class="cabecera grande">
+    <!-- PAC-MAN: círculo amarillo con la boca en cuña, un ojo y puntos para comer.
+         Todo es SVG, así funciona en Apps Script sin subir ninguna imagen.
+         La boca se redibuja por JS para que se abra y se cierre de verdad. -->
+    <svg class="avatar" id="avatar" viewBox="0 0 220 200" aria-label="Pac-Man, el tutor">
+      <!-- chispas de celebración -->
+      <g class="chispa" style="transform-origin:90px 100px">
+        <circle cx="20" cy="50" r="5" fill="#ffb547"/><circle cx="170" cy="40" r="4" fill="#ffb547"/>
+        <circle cx="20" cy="150" r="4" fill="#26d9c6"/><circle cx="175" cy="155" r="5" fill="#ff6fb5"/>
+        <circle cx="90" cy="12" r="4" fill="#ff6fb5"/>
+      </g>
+      <g id="pacman">
+        <!-- cuerpo: el path se genera en dibujarPacman() -->
+        <path id="cuerpo" d="M 90 100 L 143.7 64 A 62 62 0 1 0 143.7 136 Z" fill="#ffd93b" stroke="#eab308" stroke-width="2"/>
+        <!-- ojo -->
+        <g class="ojo"><ellipse cx="82" cy="66" rx="8" ry="10" fill="#22222e"/><circle cx="85" cy="62" r="3" fill="#fff"/></g>
+        <!-- puntitos de "pensando" -->
+        <g id="puntos">
+          <circle cx="150" cy="40" r="4" fill="#eef0ff"/><circle cx="162" cy="32" r="4" fill="#eef0ff"/><circle cx="174" cy="24" r="4" fill="#eef0ff"/>
+        </g>
+        <!-- Zzz de pausa -->
+        <g id="zzz" fill="#9aa0c3" font-family="system-ui, sans-serif" font-weight="700">
+          <text x="150" y="48" font-size="16">z</text>
+          <text x="162" y="34" font-size="20">Z</text>
+        </g>
+        <!-- puntos para comer, a la derecha de la boca -->
+        <g id="puntosComida" fill="#ffe27a">
+          <circle class="punto-comida" cx="172" cy="100" r="6"/>
+          <circle class="punto-comida" cx="192" cy="100" r="6"/>
+          <circle class="punto-comida" cx="210" cy="100" r="8" fill="#fff"/>
+        </g>
+        <!-- fantasma que huye al celebrar -->
+        <g class="fantasma">
+          <path d="M192 58 Q192 44 204 44 Q216 44 216 58 L216 78 L212 72 L208 78 L204 72 L200 78 L196 72 L192 78 Z" fill="#ff5b5b"/>
+          <circle cx="200" cy="58" r="3" fill="#fff"/><circle cx="209" cy="58" r="3" fill="#fff"/>
+          <circle cx="201" cy="58" r="1.5" fill="#22222e"/><circle cx="210" cy="58" r="1.5" fill="#22222e"/>
+        </g>
+      </g>
+    </svg>
+    <div>
+      <div class="nombre" id="nombreTutor">Pac-Man</div>
+      <div class="estado-txt" id="estadoTxt">Listo para estudiar</div>
+    </div>
+  </div>
+
+  <!-- PIN -->
+  <div id="pantallaPin" class="centro">
+    <div>Escribe tu PIN para entrar</div>
+    <div class="estado-txt">Alumno o papás: cada quien con su PIN</div>
+    <input type="password" id="pin" inputmode="numeric" autocomplete="off">
+    <button class="primario" onclick="entrar()">Entrar</button>
+    <div class="error" id="errorPin"></div>
+  </div>
+
+  <!-- Panel de papás -->
+  <div id="panelPapas" class="oculto"></div>
+
+  <!-- Materia -->
+  <div id="pantallaMateria" class="centro oculto">
+    <div id="saludo" style="font-size:18px"></div>
+    <div id="continuar" class="oculto" style="width:100%;max-width:420px">
+      <button class="primario" style="width:100%" onclick="continuarSesion()" id="btnContinuar">▶ Continuar</button>
+      <div class="estado-txt" style="margin-top:6px">o elige una materia para empezar otra sesión</div>
+    </div>
+    <div class="chips">
+      <button class="chip" onclick="iniciar('Matemáticas')">➗ Matemáticas</button>
+      <button class="chip" onclick="iniciar('Español')">📖 Español</button>
+      <button class="chip" onclick="iniciar('Historia')">🏛️ Historia</button>
+      <button class="chip" onclick="iniciar('Taller de música')">🎵 Música</button>
+      <button class="chip" onclick="iniciar('Inglés')">🗣️ Inglés</button>
+      <button class="chip" onclick="iniciar('Otra materia')">📚 Otra materia</button>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div id="pantallaChat" class="oculto" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <div class="chat" id="chat"></div>
+    <div class="previa oculto" id="previa">📷 Foto lista para enviar <button class="icono" style="width:auto;height:auto;padding:2px 8px;font-size:13px" onclick="quitarFoto()">quitar</button></div>
+    <div class="barra">
+      <button class="icono" title="Foto" onclick="document.getElementById('archivo').click()">📷</button>
+      <input type="file" id="archivo" accept="image/*" class="oculto" onchange="tomarFoto(event)">
+      <textarea id="entrada" rows="1" placeholder="Escribe o toca 🎤 para hablar"></textarea>
+      <button class="icono mic oculto" id="btnMic" title="Hablar" onclick="alternarMic()">🎤</button>
+      <button class="icono enviar" onclick="enviar()">➤</button>
+    </div>
+    <div class="acciones">
+      <button id="btnVoz" onclick="alternarVoz()">🔊 Voz: sí</button>
+      <button id="btnIdioma" class="oculto" onclick="alternarIdiomaMic()">🎤 Hablo en: inglés</button>
+      <button onclick="terminar()">Terminar sesión</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ===== Modo independiente =====
+     Si esta página se abre FUERA de Apps Script (por ejemplo, en GitHub Pages), se conecta a tu
+     web app por internet. Pega aquí la URL de tu implementación, la que termina en /exec. */
+  var URL_APP = 'https://script.google.com/macros/s/AKfycbx9hux-iDweNtgBbtfnmR629nmwdTcZ0Q0uM3-umHMURqxe3oAnNcIZAfZymrK7ZkraHA/exec';
+  (function () {
+    if (window.google && google.script && google.script.run) return; // dentro de Apps Script no hace falta
+    function corredor(ok, falla) {
+      return new Proxy({}, { get: function (_, nombre) {
+        if (nombre === 'withSuccessHandler') return function (f) { return corredor(f, falla); };
+        if (nombre === 'withFailureHandler') return function (f) { return corredor(ok, f); };
+        return function () {
+          var args = Array.prototype.slice.call(arguments);
+          fetch(URL_APP, { method: 'POST', redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ fn: nombre, args: args }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d && d.ok) { if (ok) ok(d.result); } else if (falla) falla(new Error((d && d.error) || 'Error del servidor')); })
+            .catch(function (e) { if (falla) falla(e); });
+        };
+      } });
+    }
+    window.google = { script: { run: corredor(null, null) } };
+  })();
+  var estado = { pin: '', tutor: 'Pac-Man', alumno: '', materia: '', sesionId: '', mensajes: [], foto: null, voz: true, ocupado: false, terminada: false,
+    vozNatural: true, audio: null, turnoVoz: 0, rec: null, grabador: null, grabando: false, srFallo: false, activa: null, idiomaMic: 'es-MX' };
+  var avatar = document.getElementById('avatar');
+
+  function $(id) { return document.getElementById(id); }
+
+  /* --- Boca de Pac-Man: se redibuja como un sector con la boca abierta ---
+     angulo = mitad de la apertura de la boca, en radianes. */
+  var anguloBoca = 0.35, bocaAbriendo = true, pasoBoca = 0.04, minBoca = 0.12, maxBoca = 0.45, estadoActual = '';
+  function dibujarPacman(angulo) {
+    var cx = 90, cy = 100, r = 62;
+    var x1 = cx + r * Math.cos(-angulo), y1 = cy + r * Math.sin(-angulo);
+    var x2 = cx + r * Math.cos(angulo), y2 = cy + r * Math.sin(angulo);
+    $('cuerpo').setAttribute('d', 'M ' + cx + ' ' + cy + ' L ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' A ' + r + ' ' + r + ' 0 1 0 ' + x2.toFixed(1) + ' ' + y2.toFixed(1) + ' Z');
+  }
+  setInterval(function () {
+    if (estadoActual === 'pausa') { anguloBoca = 0.03; }
+    else if (estadoActual === 'pensando') { anguloBoca = 0.07; }
+    else {
+      anguloBoca += bocaAbriendo ? pasoBoca : -pasoBoca;
+      if (anguloBoca >= maxBoca) { anguloBoca = maxBoca; bocaAbriendo = false; }
+      if (anguloBoca <= minBoca) { anguloBoca = minBoca; bocaAbriendo = true; }
+    }
+    dibujarPacman(anguloBoca);
+  }, 70);
+  dibujarPacman(anguloBoca);
+
+  function ponerEstado(clase, texto) {
+    estadoActual = clase || '';
+    avatar.setAttribute('class', 'avatar ' + (clase || ''));
+    $('estadoTxt').textContent = texto || '';
+    // Velocidad de la boca según el estado
+    if (clase === 'hablando') { pasoBoca = 0.12; minBoca = 0.05; maxBoca = 0.65; }
+    else if (clase === 'comiendo') { pasoBoca = 0.15; minBoca = 0.05; maxBoca = 0.65; }
+    else if (clase === 'celebra') { pasoBoca = 0.10; minBoca = 0.10; maxBoca = 0.60; }
+    else { pasoBoca = 0.04; minBoca = 0.12; maxBoca = 0.45; }
+  }
+
+  try { var guardado = localStorage.getItem('tutor_pin'); if (guardado) $('pin').value = guardado; } catch (e) {}
+
+  function entrar() {
+    var pin = $('pin').value.trim();
+    $('errorPin').textContent = '';
+    ponerEstado('pensando', 'Revisando…');
+    google.script.run
+      .withSuccessHandler(function (r) {
+        estado.pin = pin; estado.tutor = r.tutor || 'Pac-Man'; estado.alumno = r.alumno;
+        if (r.rol === 'papas') {
+          $('pin').value = '';
+          $('pantallaPin').classList.add('oculto');
+          $('cabecera').classList.add('oculto');
+          $('panelPapas').classList.remove('oculto');
+          $('panelPapas').innerHTML = '<p class="pp-mini">Cargando…</p>';
+          ppCargar();
+          return;
+        }
+        try { localStorage.setItem('tutor_pin', pin); } catch (e) {}
+        $('nombreTutor').textContent = estado.tutor;
+        $('saludo').textContent = '¡Hola, ' + r.alumno.split(' ')[0] + '! ¿Qué estudiamos hoy? 🟡';
+        estado.activa = r.activa || null;
+        if (estado.activa) {
+          $('btnContinuar').textContent = '▶ Continuar ' + estado.activa.materia + ' donde te quedaste';
+          $('continuar').classList.remove('oculto');
+        }
+        $('pantallaPin').classList.add('oculto');
+        $('pantallaMateria').classList.remove('oculto');
+        ponerEstado('celebra', 'Listo para estudiar');
+        setTimeout(function () { ponerEstado('', 'Listo para estudiar'); }, 1800);
+      })
+      .withFailureHandler(function () {
+        ponerEstado('', '');
+        $('errorPin').textContent = 'PIN incorrecto';
+      })
+      .entrar(pin);
+  }
+
+  function abrirChat(materia) {
+    $('pantallaMateria').classList.add('oculto');
+    $('pantallaChat').classList.remove('oculto');
+    $('cabecera').classList.remove('grande');
+    estado.idiomaMic = materia === 'Inglés' ? 'en-US' : 'es-MX';
+    $('btnIdioma').classList.toggle('oculto', materia !== 'Inglés');
+    actualizarBotonIdioma();
+  }
+
+  /** Retoma la sesión que quedó a medias (aunque haya recargado la página o cambiado de dispositivo). */
+  function continuarSesion() {
+    var a = estado.activa; if (!a) return;
+    estado.materia = a.materia; estado.sesionId = a.sesionId; estado.terminada = false;
+    estado.mensajes = a.mensajes.map(function (m) { return { role: m.role, text: m.text }; });
+    estado.activa = null; $('continuar').classList.add('oculto');
+    $('chat').innerHTML = '';
+    estado.mensajes.forEach(function (m, i) {
+      if (i === 0) return; // el saludo automático no se muestra
+      pintar(m.role === 'user' ? 'yo' : 'tutor', m.text.replace(/^\[voz\] /, '🎤 '));
+    });
+    abrirChat(a.materia);
+    ponerEstado('', 'Seguimos donde nos quedamos');
+  }
+
+  function iniciar(materia) {
+    if (estado.activa) { estado.activa = null; $('continuar').classList.add('oculto'); google.script.run.descartarSesionActiva(estado.pin); }
+    estado.materia = materia;
+    estado.sesionId = String(Date.now());
+    estado.mensajes = [];
+    estado.terminada = false;
+    abrirChat(materia);
+    mandar('Hola, quiero estudiar ' + materia + '.', null, false);
+  }
+
+  function enviar() {
+    var txt = $('entrada').value.trim();
+    if ((!txt && !estado.foto) || estado.ocupado) return;
+    $('entrada').value = '';
+    var foto = estado.foto; quitarFoto();
+    mandar(txt, foto, true);
+  }
+
+  function terminar() {
+    if (estado.ocupado) return;
+    if (estado.terminada) { volverAMaterias(); return; }
+    mandar('Quiero terminar la sesión por hoy.', null, true);
+  }
+
+  function volverAMaterias() {
+    $('chat').innerHTML = '';
+    $('pantallaChat').classList.add('oculto');
+    $('pantallaMateria').classList.remove('oculto');
+    $('cabecera').classList.add('grande');
+    ponerEstado('', 'Listo para estudiar');
+  }
+
+  function mandar(texto, foto, mostrar, visible) {
+    estado.ocupado = true;
+    callar();
+    var m = { role: 'user', text: texto };
+    if (foto) m.image = { mediaType: 'image/jpeg', data: foto };
+    estado.mensajes.push(m);
+    if (mostrar) pintar('yo', visible || texto, foto);
+    ponerEstado('pensando', 'Pensando…');
+
+    // Para no reenviar fotos viejas en cada turno, solo conservamos las 2 más recientes.
+    var conFoto = 0;
+    var envio = estado.mensajes.slice().reverse().map(function (x) {
+      if (x.image) { conFoto++; if (conFoto > 2) return { role: x.role, text: (x.text || '') + ' [foto enviada antes]' }; }
+      return x;
+    }).reverse();
+
+    google.script.run
+      .withSuccessHandler(function (r) {
+        estado.ocupado = false;
+        var limpio = r.texto.replace(/\[(celebra|pausa|comiendo)\]/g, '').trim();
+        var celebra = /\[celebra\]/.test(r.texto) || r.termino;
+        var pausa = /\[pausa\]/.test(r.texto);
+        var comiendo = /\[comiendo\]/.test(r.texto);
+        estado.mensajes.push({ role: 'assistant', text: limpio });
+        pintar('tutor', limpio);
+        hablar(limpio, comiendo ? 'comiendo' : (celebra ? 'celebra' : (pausa ? 'pausa' : '')));
+        if (r.termino) {
+          estado.terminada = true;
+          pintar('tutor', '✅ Sesión guardada. Toca "Terminar sesión" para volver al inicio.');
+        }
+      })
+      .withFailureHandler(function (e) {
+        estado.ocupado = false;
+        estado.mensajes.pop();
+        ponerEstado('', '');
+        pintar('tutor', '😵 Algo falló: ' + (e && e.message ? e.message : e) + '. Intenta mandar tu mensaje otra vez.');
+      })
+      .conversar(estado.pin, estado.sesionId, estado.materia, envio);
+  }
+
+  function escapar(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function pintar(quien, texto, foto) {
+    var div = document.createElement('div');
+    div.className = 'msg ' + quien;
+    var html = '';
+    if (foto) html += '<img src="data:image/jpeg;base64,' + foto + '">';
+    html += escapar(texto || '').replace(/\(ES:\s*/g, '(').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    div.innerHTML = html;
+    $('chat').appendChild(div);
+    $('chat').scrollTop = $('chat').scrollHeight;
+  }
+
+  // --- Voz del tutor: voz natural (Google Cloud) y, si no está configurada, la del navegador ---
+  function alternarVoz() {
+    estado.voz = !estado.voz;
+    $('btnVoz').textContent = estado.voz ? '🔊 Voz: sí' : '🔇 Voz: no';
+    if (!estado.voz) callar();
+  }
+
+  function callar() {
+    estado.turnoVoz++;
+    if (estado.audio) { try { estado.audio.pause(); } catch (e) {} estado.audio = null; }
+    if (window.speechSynthesis) speechSynthesis.cancel();
+  }
+
+  function limpiarParaVoz(t) {
+    return t.replace(/\*\*/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').trim();
+  }
+
+  /** En Inglés separa lo que va en inglés de lo que va entre (ES: ...) para leer cada parte con su voz. */
+  function segmentar(texto) {
+    if (estado.materia !== 'Inglés') return [{ texto: limpiarParaVoz(texto), idioma: 'es' }];
+    var partes = [], re = /\(ES:\s*([^)]*)\)/g, ult = 0, m;
+    while ((m = re.exec(texto)) !== null) {
+      if (m.index > ult) partes.push({ texto: limpiarParaVoz(texto.slice(ult, m.index)), idioma: 'en' });
+      partes.push({ texto: limpiarParaVoz(m[1]), idioma: 'es' });
+      ult = re.lastIndex;
+    }
+    if (ult < texto.length) partes.push({ texto: limpiarParaVoz(texto.slice(ult)), idioma: 'en' });
+    return partes.filter(function (x) { return /[A-Za-zÁÉÍÓÚáéíóúñÑ0-9]/.test(x.texto); });
+  }
+
+  function hablar(texto, final) {
+    var turno = ++estado.turnoVoz;
+    var alTerminar = function () {
+      if (turno !== estado.turnoVoz) return;
+      ponerEstado(final, final === 'celebra' ? '¡Bien hecho!' : (final === 'pausa' ? 'Pausa corta' : (final === 'comiendo' ? 'Ñam ñam…' : 'Te escucho')));
+      if (final === 'celebra') setTimeout(function () { if (turno === estado.turnoVoz) ponerEstado('', 'Te escucho'); }, 2000);
+      if (final === 'comiendo') setTimeout(function () { if (turno === estado.turnoVoz) ponerEstado('', 'Te escucho'); }, 2500);
+    };
+    var segmentos = segmentar(texto);
+    if (!estado.voz || !segmentos.length) { alTerminar(); return; }
+    if (!estado.vozNatural) { hablarNavegador(segmentos, turno, alTerminar); return; }
+
+    ponerEstado('pensando', 'Preparando la voz…');
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (turno !== estado.turnoVoz) return;
+        if (!r || !r.ok) {
+          if (r && r.motivo === 'sin_clave') estado.vozNatural = false;
+          hablarNavegador(segmentos, turno, alTerminar);
+          return;
+        }
+        reproducir(r.audios, 0, turno, alTerminar, segmentos);
+      })
+      .withFailureHandler(function () { hablarNavegador(segmentos, turno, alTerminar); })
+      .sintetizar(estado.pin, segmentos);
+  }
+
+  function reproducir(audios, i, turno, alTerminar, segmentos) {
+    if (turno !== estado.turnoVoz) return;
+    if (i >= audios.length) { estado.audio = null; alTerminar(); return; }
+    var a = new Audio('data:audio/mp3;base64,' + audios[i]);
+    estado.audio = a;
+    a.onplay = function () { ponerEstado('hablando', 'Hablando…'); };
+    a.onended = function () { reproducir(audios, i + 1, turno, alTerminar, segmentos); };
+    a.onerror = function () { hablarNavegador(segmentos.slice(i), turno, alTerminar); };
+    var p = a.play();
+    if (p && p.catch) p.catch(function () { hablarNavegador(segmentos.slice(i), turno, alTerminar); });
+  }
+
+  function elegirVoz(idioma) {
+    var voces = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    var exacta = voces.filter(function (v) { return v.lang.replace('_', '-').toLowerCase() === idioma.toLowerCase(); })[0];
+    return exacta || voces.filter(function (v) { return v.lang.toLowerCase().indexOf(idioma.slice(0, 2)) === 0; })[0] || null;
+  }
+
+  function hablarNavegador(segmentos, turno, alTerminar) {
+    if (!window.speechSynthesis || turno !== estado.turnoVoz) { alTerminar(); return; }
+    speechSynthesis.cancel();
+    segmentos.forEach(function (sg, i) {
+      var u = new SpeechSynthesisUtterance(sg.texto);
+      var idioma = sg.idioma === 'en' ? 'en-US' : 'es-MX';
+      u.lang = idioma;
+      var v = elegirVoz(idioma); if (v) u.voice = v;
+      if (i === 0) u.onstart = function () { if (turno === estado.turnoVoz) ponerEstado('hablando', 'Hablando…'); };
+      if (i === segmentos.length - 1) { u.onend = alTerminar; u.onerror = alTerminar; }
+      speechSynthesis.speak(u);
+    });
+  }
+  if (window.speechSynthesis) speechSynthesis.onvoiceschanged = function () {};
+
+  // --- Micrófono: primero se pide permiso; luego dictado del navegador y, si falla, grabación + transcripción en Google Cloud ---
+  var Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var puedeGrabar = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  if (Reconocedor || puedeGrabar) $('btnMic').classList.remove('oculto');
+
+  function actualizarBotonIdioma() {
+    $('btnIdioma').textContent = '🎤 Hablo en: ' + (estado.idiomaMic === 'en-US' ? 'inglés' : 'español');
+  }
+  function alternarIdiomaMic() {
+    estado.idiomaMic = estado.idiomaMic === 'en-US' ? 'es-MX' : 'en-US';
+    actualizarBotonIdioma();
+  }
+
+  function micListo(encendido) {
+    estado.grabando = encendido;
+    $('btnMic').classList.toggle('grabando', encendido);
+    if (encendido) ponerEstado('escucha', (estado.idiomaMic === 'en-US' ? 'Te escucho (inglés)…' : 'Te escucho…') + ' toca 🎤 para terminar');
+  }
+
+  function enviarDicho(dicho) {
+    dicho = (dicho || '').trim();
+    $('entrada').value = '';
+    if (!dicho) { ponerEstado('', 'No te escuché, intenta otra vez'); return; }
+    var foto = estado.foto; quitarFoto();
+    mandar('[voz] ' + dicho, foto, true, '🎤 ' + dicho);
+  }
+
+  function errorPermiso(err) {
+    var n = err && err.name;
+    var msg = n === 'NotFoundError' ? 'No encontré ningún micrófono conectado en este dispositivo.'
+      : n === 'NotReadableError' ? 'Otra aplicación está usando el micrófono, o el sistema lo tiene bloqueado.'
+      : 'El navegador bloqueó el micrófono (' + (n || 'sin detalle') + '). Toca el ícono a la izquierda de la dirección de la página → Configuración del sitio → Micrófono → Permitir, y recarga la página.';
+    pintar('tutor', '🎤 ' + msg);
+    ponerEstado('', 'Micrófono no disponible');
+  }
+
+  function alternarMic() {
+    if (estado.ocupado) return;
+    if (estado.grabando) {
+      if (estado.grabador && estado.grabador.state === 'recording') estado.grabador.stop();
+      else if (estado.rec) estado.rec.stop();
+      return;
+    }
+    callar();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { if (Reconocedor) iniciarDictado(); return; }
+    // Pedir el micrófono explícitamente hace que el navegador muestre la ventana de permiso.
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      if (Reconocedor && !estado.srFallo) {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        iniciarDictado();
+      } else {
+        iniciarGrabacion(stream);
+      }
+    }).catch(errorPermiso);
+  }
+
+  function iniciarDictado() {
+    var rec = new Reconocedor();
+    estado.rec = rec;
+    rec.lang = estado.idiomaMic;
+    rec.interimResults = true;
+    rec.continuous = false;
+    var definitivo = '', fallo = false;
+    rec.onstart = function () { micListo(true); };
+    rec.onresult = function (ev) {
+      var parcial = '';
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        if (ev.results[i].isFinal) definitivo += ev.results[i][0].transcript + ' ';
+        else parcial += ev.results[i][0].transcript;
+      }
+      $('entrada').value = (definitivo + parcial).trim();
+    };
+    rec.onerror = function (ev) {
+      if (['not-allowed', 'service-not-allowed', 'network', 'audio-capture', 'language-not-supported'].indexOf(ev.error) >= 0) fallo = true;
+    };
+    rec.onend = function () {
+      micListo(false);
+      if (fallo) {
+        // El dictado del navegador no funciona aquí: de ahora en adelante se graba y se transcribe en el servidor.
+        estado.srFallo = true;
+        if (!puedeGrabar) { pintar('tutor', '🎤 El dictado no está disponible en este navegador. Usa Chrome o el micrófono del teclado.'); return; }
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(iniciarGrabacion).catch(errorPermiso);
+        return;
+      }
+      enviarDicho(definitivo || $('entrada').value);
+    };
+    try { rec.start(); } catch (e) { micListo(false); }
+  }
+
+  function iniciarGrabacion(stream) {
+    var mime = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm'].filter(function (m) {
+      return MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m);
+    })[0] || '';
+    var grabador = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    estado.grabador = grabador;
+    var trozos = [];
+    var limite = setTimeout(function () { if (grabador.state === 'recording') grabador.stop(); }, 30000);
+    grabador.ondataavailable = function (ev) { if (ev.data && ev.data.size) trozos.push(ev.data); };
+    grabador.onstop = function () {
+      clearTimeout(limite);
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      micListo(false);
+      estado.grabador = null;
+      var blob = new Blob(trozos, { type: grabador.mimeType || mime });
+      if (blob.size < 1500) { ponerEstado('', 'No te escuché, intenta otra vez'); return; }
+      ponerEstado('pensando', 'Entendiendo lo que dijiste…');
+      var lector = new FileReader();
+      lector.onload = function () {
+        google.script.run
+          .withSuccessHandler(function (r) {
+            if (r && r.ok) { enviarDicho(r.texto); return; }
+            var m = r ? r.motivo : '';
+            ponerEstado('', 'No te escuché, intenta otra vez');
+            if (m === 'sin_clave' || m === 'error_stt') pintar('tutor', '🎤 Te grabé, pero no pude transcribirlo (' + m + (r.codigo ? ' ' + r.codigo : '') + '). Papá: hay que habilitar "Cloud Speech-to-Text API" en Google Cloud y permitirla en la clave.');
+            else if (m === 'tope') pintar('tutor', '🎤 Se alcanzó el límite mensual de dictados. Por ahora escribe o usa el micrófono del teclado.');
+          })
+          .withFailureHandler(function () { ponerEstado('', 'No pude transcribir, intenta otra vez'); })
+          .transcribir(estado.pin, String(lector.result).split(',')[1], estado.idiomaMic, grabador.mimeType || mime);
+      };
+      lector.readAsDataURL(blob);
+    };
+    grabador.start();
+    micListo(true);
+  }
+
+  // --- Fotos: se reducen en el celular antes de enviarse ---
+  function tomarFoto(ev) {
+    var archivo = ev.target.files && ev.target.files[0];
+    if (!archivo) return;
+    var lector = new FileReader();
+    lector.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var max = 1280, w = img.width, h = img.height;
+        if (w > max || h > max) { var k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        estado.foto = c.toDataURL('image/jpeg', 0.8).split(',')[1];
+        $('previa').classList.remove('oculto');
+      };
+      img.src = lector.result;
+    };
+    lector.readAsDataURL(archivo);
+    ev.target.value = '';
+  }
+
+  function quitarFoto() { estado.foto = null; $('previa').classList.add('oculto'); }
+
+  $('entrada').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+  });
+  $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') entrar(); });
+
+  // ================= Panel de papás =================
+  var pp = { datos: null, tab: 'resumen' };
+  function e(x) { return escapar(x == null ? '' : x).replace(/"/g, '&quot;'); }
+  function ppFecha(f) {
+    if (!f) return '';
+    var p = f.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'][d.getDay()] + ' ' + (+p[2]) + '/' + (+p[1]);
+  }
+  function ppCargar() {
+    google.script.run.withSuccessHandler(function (d) { pp.datos = d; ppPintar(); })
+      .withFailureHandler(function (er) { $('panelPapas').innerHTML = '<p class="pp-rojo">No se pudo cargar: ' + e(er && er.message) + '</p>'; })
+      .panelPapas(estado.pin);
+  }
+  function ppTab(t) { pp.tab = t; ppPintar(); }
+  function ppSalir() { location.reload(); }
+
+  function ppPendiente(x, vencido) {
+    return '<div class="pp-item"><div class="pp-fila"><div><span class="pp-tag">' + e(x.materia || x.tipo) + '</span> ' +
+      (x.fecha ? '<span class="' + (vencido ? 'pp-rojo' : 'pp-mini') + '">' + (vencido ? 'venció ' : 'para el ') + ppFecha(x.fecha) + '</span>' : '') +
+      '<br><b>' + e(x.titulo) + '</b><div class="pp-mini">' + e(x.detalle) + '</div></div>' +
+      '<button class="pp-btn" data-clave="' + e(x.clave) + '" onclick="ppHecho(this)">✓ Hecho</button></div></div>';
+  }
+  function ppSiNo(s, campo, etiqueta) {
+    var v = s[campo] === 'si' ? 'sí' : s[campo];
+    var b = function (val, txt) {
+      return '<button class="pp-btn ' + (v === val ? 'sel' : '') + '" data-id="' + e(s.id) + '" data-campo="' + campo + '" data-valor="' + val + '" onclick="ppMarcar(this)">' + txt + '</button>';
+    };
+    return '<div style="margin-top:6px"><span class="pp-mini">' + etiqueta + '</span> ' + b('sí', 'Sí') + ' ' + b('no', 'No') + '</div>';
+  }
+
+  function ppPintar() {
+    var d = pp.datos, w = d.semana, h = '';
+    h += '<div class="pp-top"><div><h1>' + e(d.alumno) + '</h1><div class="pp-mini">Panel de papás · ' + ppFecha(d.hoy) + '</div></div>' +
+      '<div><button class="pp-btn" onclick="ppCargar()">↻</button> <button class="pp-btn" onclick="ppSalir()">Salir</button></div></div>';
+    var tabs = [['resumen', 'Resumen'], ['materias', 'Por materia'], ['pendientes', 'Pendientes (' + (d.vencidos.length + d.proximos.length) + ')'], ['sesiones', 'Sesiones'], ['boleta', 'Boleta']];
+    h += '<div class="pp-tabs">' + tabs.map(function (t) {
+      return '<button class="pp-tab ' + (pp.tab === t[0] ? 'activa' : '') + '" onclick="ppTab(\'' + t[0] + '\')">' + t[1] + '</button>';
+    }).join('') + '</div>';
+
+    if (pp.tab === 'resumen') {
+      h += '<div class="pp-card"><h2>Resumen de 1 minuto</h2>' +
+        '<div class="pp-paso"><span>🌟</span><div><b>Lo que hizo bien</b>' + (d.resumen.logros.length
+          ? d.resumen.logros.map(function (l) { return '<div>' + e(l) + '</div>'; }).join('')
+          : '<div class="pp-mini">Aún no hay sesiones esta semana.</div>') + '</div></div>' +
+        '<div class="pp-paso"><span>🎯</span><div><b>Dónde apoyarlo</b><div>' + e(d.resumen.mejorar) + '</div></div></div>' +
+        '<div class="pp-paso"><span>👉</span><div><b>Qué hacer hoy</b><div>' + e(d.resumen.accion) + '</div></div></div></div>';
+      h += '<div class="pp-card"><h2>Su semana de estudio</h2><div class="pp-kpis">' +
+        '<div class="pp-kpi"><b>' + w.dias + '/7</b><span>días que estudió</span></div>' +
+        '<div class="pp-kpi"><b>' + w.sesiones + '</b><span>sesiones</span></div>' +
+        '<div class="pp-kpi"><b>' + w.minutos + '</b><span>minutos</span></div>' +
+        '<div class="pp-kpi"><b>' + (w.arrancoSolo == null ? '—' : w.arrancoSolo + '%') + '</b><span>arrancó solo</span></div></div>' +
+        '<p class="pp-mini">"Arrancó solo" se calcula con sus respuestas en la pestaña Sesiones. Es la señal más importante: indica si se está formando el hábito.</p></div>';
+      h += '<div class="pp-card"><h2>Requiere atención</h2>' + (d.atencion.length
+        ? d.atencion.map(function (a) { return '<div class="pp-item">' + (a.nivel === 'alto' ? '🔴 ' : '🟡 ') + e(a.texto) + '</div>'; }).join('')
+        : '<div class="pp-mini">Nada urgente. 👍</div>') + '</div>';
+      if (d.soloPapas.length) {
+        h += '<div class="pp-card"><h2>Solo para ustedes</h2><p class="pp-mini">Avisos administrativos y comentarios de maestros. El tutor no los ve ni los menciona.</p>' +
+          d.soloPapas.map(function (x) { return ppPendiente(x, false); }).join('') + '</div>';
+      }
+    }
+
+    if (pp.tab === 'materias') {
+      h += '<p class="pp-mini">🔴 necesita apoyo ya · 🟡 hay que estar pendientes · 🟢 va bien. Se calcula con la boleta, las entregas y lo que el tutor observa en las sesiones.</p>';
+      h += d.materias.length ? d.materias.map(function (m) {
+        return '<div class="pp-card pp-borde-' + m.color + '"><div class="pp-fila"><h2>' + e(m.nombre) + '</h2>' +
+          '<span class="pp-mini">' + (m.minCal != null ? 'boleta: ' + m.minCal + ' · ' : '') + m.pendientes + ' pendiente(s) · ' + m.sesiones7 + ' sesión(es) esta semana</span></div>' +
+          m.razones.map(function (r) { return '<div style="margin-top:4px">' + e(r) + '</div>'; }).join('') + '</div>';
+      }).join('') : '<div class="pp-card pp-mini">Aparecerá cuando haya boleta, pendientes o sesiones.</div>';
+    }
+
+    if (pp.tab === 'pendientes') {
+      h += '<div class="pp-card"><h2>Vencidos</h2>' + (d.vencidos.length ? d.vencidos.map(function (x) { return ppPendiente(x, true); }).join('') : '<div class="pp-mini">Ninguno. 👍</div>') + '</div>';
+      h += '<div class="pp-card"><h2>Próximos</h2>' + (d.proximos.length ? d.proximos.map(function (x) { return ppPendiente(x, false); }).join('') : '<div class="pp-mini">Sin entregas con fecha.</div>') + '</div>';
+      if (d.sinFecha.length) h += '<div class="pp-card"><h2>Avisos sin fecha</h2>' + d.sinFecha.map(function (x) { return ppPendiente(x, false); }).join('') + '</div>';
+      h += '<p class="pp-mini">Al marcar "Hecho", el tutor deja de mencionarlo en las sesiones.</p>';
+    }
+
+    if (pp.tab === 'sesiones') {
+      h += d.sesiones.length ? d.sesiones.map(function (s) {
+        return '<div class="pp-card"><span class="pp-tag">' + e(s.materia) + '</span> <span class="pp-mini">' + ppFecha(s.fecha) + ' · ' + s.minutos + ' min · ' + e(s.modo) + '</span>' +
+          '<h2 style="margin-top:6px">' + e(s.tema) + '</h2>' +
+          '<div class="pp-mini">Resolvió sin ayuda: ' + e(s.aciertos) + ' · Lo explicó con sus palabras: ' + e(s.explico) + '</div>' +
+          (s.logro ? '<div style="margin-top:6px">🌟 ' + e(s.logro) + '</div>' : '') +
+          (s.dificultad ? '<div>🎯 Le costó: ' + e(s.dificultad) + '</div>' : '') +
+          (s.pregunta ? '<div>💬 Pregúntenle: ' + e(s.pregunta) + '<div class="pp-mini">Debería contestar: ' + e(s.respuesta) + '</div></div>' : '') +
+          ppSiNo(s, 'arranco', '¿Arrancó solo, sin que se lo pidieran?') + ppSiNo(s, 'tarjeta', '¿Le hicieron la pregunta?') + '</div>';
+      }).join('') : '<div class="pp-card pp-mini">Todavía no hay sesiones.</div>';
+    }
+
+    if (pp.tab === 'boleta') {
+      h += '<div class="pp-card"><h2>Calificaciones de la boleta</h2>' + (d.califs.length
+        ? '<table><tr><th>Materia</th><th>Periodo</th><th>Calif.</th></tr>' + d.califs.map(function (c) {
+            var n = parseFloat(c.calificacion), cls = isNaN(n) ? '' : (n < 7 ? 'pp-rojo' : (n < 8 ? 'pp-amarillo' : ''));
+            return '<tr><td>' + e(c.materia) + (c.observacion ? '<div class="pp-mini">' + e(c.observacion) + '</div>' : '') + '</td><td class="pp-mini">' + e(c.periodo) + '</td><td class="' + cls + '"><b>' + e(c.calificacion) + '</b></td></tr>';
+          }).join('') + '</table>'
+        : '<div class="pp-mini">Aparecerán cuando llegue una boleta por correo.</div>') + '</div>';
+    }
+    $('panelPapas').innerHTML = h;
+  }
+
+  function ppHecho(btn) {
+    btn.disabled = true; btn.textContent = '…';
+    google.script.run.withSuccessHandler(function () { ppCargar(); })
+      .withFailureHandler(function () { btn.disabled = false; btn.textContent = '✓ Hecho'; })
+      .marcarPendiente(estado.pin, btn.getAttribute('data-clave'), 'hecho');
+  }
+  function ppMarcar(btn) {
+    var id = btn.getAttribute('data-id'), campo = btn.getAttribute('data-campo'), valor = btn.getAttribute('data-valor');
+    google.script.run.withSuccessHandler(function () {
+      pp.datos.sesiones.forEach(function (s) { if (s.id === id) s[campo] = valor; });
+      ppPintar();
+    }).marcarSesion(estado.pin, id, campo, valor);
+  }
+</script>
+</body>
+</html>
