@@ -128,6 +128,28 @@
   #panelPapas th { color:var(--suave); border-top:0; }
   @media (max-width:420px) { .pp-kpis { grid-template-columns:repeat(2,1fr); } }
 
+  /* --- Personalidad: temas de color, marcador y festejos --- */
+  body { background: radial-gradient(1200px 500px at 50% -10%, color-mix(in srgb, var(--violeta) 22%, transparent), transparent), var(--fondo); background-attachment: fixed; }
+  .cabecera { background: linear-gradient(180deg, color-mix(in srgb, var(--violeta) 28%, var(--fondo)), transparent); }
+  .marcador { display: flex; gap: 8px; width: 100%; max-width: 420px; }
+  .marcador div { flex: 1; background: var(--panel); border: 1px solid color-mix(in srgb, var(--teal) 35%, transparent); border-radius: 14px; padding: 8px 4px; }
+  .marcador b { display: block; font-size: 19px; } .marcador span { font-size: 11px; color: var(--suave); }
+  .barra-nivel { width: 100%; max-width: 420px; height: 8px; background: var(--panel); border-radius: 99px; overflow: hidden; }
+  .barra-nivel i { display: block; height: 100%; background: linear-gradient(90deg, var(--teal), var(--ambar)); border-radius: 99px; transition: width .8s; }
+  .chip { transition: transform .12s; border-left: 5px solid var(--teal); font-size: 16px; }
+  .chip:nth-child(2) { border-left-color: var(--ambar); } .chip:nth-child(3) { border-left-color: #ff6fb5; }
+  .chip:nth-child(4) { border-left-color: var(--violeta); } .chip:nth-child(5) { border-left-color: #5cc8ff; } .chip:nth-child(6) { border-left-color: #b8f15a; }
+  .chip:active, .extra:active { transform: scale(.95); }
+  .msg { animation: aparecer .25s ease-out; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .tutor { border-left: 3px solid var(--teal); }
+  .yo { background: linear-gradient(135deg, var(--burbuja-yo), color-mix(in srgb, var(--violeta) 35%, var(--burbuja-yo))); }
+  .temas-color { display: flex; gap: 8px; align-items: center; color: var(--suave); font-size: 13px; }
+  .temas-color button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; }
+  .temas-color button.sel { border-color: var(--texto); }
+  .confeti { position: fixed; top: -40px; font-size: 26px; pointer-events: none; z-index: 50; animation: caer linear forwards; }
+  @keyframes caer { to { transform: translateY(110vh) rotate(540deg); opacity: .2; } }
+
   /* --- Materiales visuales del tutor --- */
   .vz { align-self: stretch; background: var(--panel); border: 1px solid #2c3260; border-radius: 16px; padding: 12px; }
   .vz h3 { margin: 0 0 10px; font-size: 15px; color: var(--ambar); }
@@ -231,6 +253,13 @@
   <div id="pantallaMateria" class="centro oculto">
     <div id="saludo" style="font-size:18px"></div>
     <div id="agenda" class="estado-txt" style="max-width:420px"></div>
+    <div class="marcador oculto" id="marcador">
+      <div><b id="mRacha">0</b><span>🔥 días de racha</span></div>
+      <div><b id="mNivel">1</b><span>⭐ <span id="mTitulo">Novato</span></span></div>
+      <div><b id="mDominados">0</b><span>🟢 temas dominados</span></div>
+    </div>
+    <div class="barra-nivel oculto" id="barraNivel"><i id="barraNivelI" style="width:0%"></i></div>
+    <div class="estado-txt oculto" id="mFaltan"></div>
     <div id="continuar" class="oculto" style="width:100%;max-width:420px">
       <button class="primario" style="width:100%" onclick="continuarSesion()" id="btnContinuar">▶ Continuar</button>
       <div class="estado-txt" style="margin-top:6px">o elige una materia para empezar otra sesión</div>
@@ -247,6 +276,7 @@
       <button class="extra" onclick="iniciar('Repaso del día', 'Hola, quiero contarte qué vi hoy en la escuela.')">📒 ¿Qué vi hoy?</button>
       <button class="extra" onclick="abrirMapa()">🗺️ Mi mapa</button>
     </div>
+    <div class="temas-color"><span>🎨 Tus colores:</span><span id="temasColor"></span></div>
   </div>
 
   <!-- Mi mapa -->
@@ -354,6 +384,7 @@
         try { localStorage.setItem('tutor_pin', pin); } catch (e) {}
         $('nombreTutor').textContent = estado.tutor;
         $('saludo').textContent = '¡Hola, ' + r.alumno.split(' ')[0] + '! ¿Qué estudiamos hoy? 🟡';
+        pintarMarcador(r.juego);
         var hz = r.horario;
         $('agenda').textContent = (hz && hz.siguiente)
           ? '📅 ' + (hz.siguiente.enDias === 1 ? 'Mañana (' + hz.siguiente.dia + ')' : 'El ' + hz.siguiente.dia) + ' tienes: ' + hz.siguiente.materias.join(', ')
@@ -461,6 +492,7 @@
         hablar(limpio, comiendo ? 'comiendo' : (celebra ? 'celebra' : (pausa ? 'pausa' : '')));
         if (r.termino) {
           estado.terminada = true;
+          festejar();
           pintar('tutor', '✅ Sesión guardada. Toca "Terminar sesión" para volver al inicio.');
         }
       })
@@ -585,6 +617,7 @@
         zona.innerHTML = '';
         if (n >= pregs.length) {
           zona.appendChild(el('div', 'vz-centro', 'Resultado: ' + buenas + ' de ' + pregs.length));
+          if (vivo && buenas === pregs.length) festejar();
           if (vivo && !estado.ocupado && !estado.terminada) {
             mandar('[quiz] "' + (v.titulo || 'Quiz') + '": acerté ' + buenas + ' de ' + pregs.length + '.' +
               (fallos.length ? ' Fallé: ' + fallos.join(' | ') : ' No fallé ninguna.'), null, true,
@@ -863,6 +896,61 @@
   });
   $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') entrar(); });
 
+  // ================= Personalidad: colores, marcador y festejos =================
+  var TEMAS_COLOR = {
+    Noche:  { '--fondo': '#0f1222', '--panel': '#181c33', '--teal': '#19c3b1', '--violeta': '#7c5cff', '--ambar': '#ffb547', '--burbuja-yo': '#2a2f55' },
+    Arcade: { '--fondo': '#12002b', '--panel': '#1f0a45', '--teal': '#00f5d4', '--violeta': '#f72585', '--ambar': '#fee440', '--burbuja-yo': '#3a0ca3' },
+    Lava:   { '--fondo': '#1a0b0b', '--panel': '#2b1212', '--teal': '#ff7b00', '--violeta': '#e63946', '--ambar': '#ffd166', '--burbuja-yo': '#4a1d1d' },
+    Bosque: { '--fondo': '#0b1a14', '--panel': '#12281f', '--teal': '#7ae582', '--violeta': '#2a9d8f', '--ambar': '#ffe66d', '--burbuja-yo': '#1d3b2f' },
+    Mar:    { '--fondo': '#04161f', '--panel': '#0a2533', '--teal': '#48cae4', '--violeta': '#0077b6', '--ambar': '#ffd60a', '--burbuja-yo': '#12394d' }
+  };
+  function ponerTemaColor(nombre) {
+    var t = TEMAS_COLOR[nombre] || TEMAS_COLOR.Noche;
+    Object.keys(t).forEach(function (k) { document.documentElement.style.setProperty(k, t[k]); });
+    try { localStorage.setItem('tutor_colores', nombre); } catch (e) {}
+    var botones = $('temasColor').children;
+    for (var i = 0; i < botones.length; i++) botones[i].className = botones[i].title === nombre ? 'sel' : '';
+  }
+  (function () {
+    Object.keys(TEMAS_COLOR).forEach(function (n) {
+      var b = document.createElement('button');
+      b.title = n;
+      b.style.background = 'linear-gradient(135deg, ' + TEMAS_COLOR[n]['--teal'] + ', ' + TEMAS_COLOR[n]['--violeta'] + ')';
+      b.onclick = function () { ponerTemaColor(n); };
+      $('temasColor').appendChild(b);
+    });
+    var guardado = 'Noche';
+    try { guardado = localStorage.getItem('tutor_colores') || 'Noche'; } catch (e) {}
+    ponerTemaColor(guardado);
+  })();
+
+  function pintarMarcador(j) {
+    if (!j) return;
+    $('mRacha').textContent = j.racha;
+    $('mNivel').textContent = 'Nivel ' + j.nivel;
+    $('mTitulo').textContent = j.titulo;
+    $('mDominados').textContent = j.dominados;
+    $('barraNivelI').style.width = Math.round(100 * (60 - j.faltan) / 60) + '%';
+    $('mFaltan').textContent = (j.hoy ? '✅ Hoy ya estudiaste. ' : (j.racha ? '¡No rompas tu racha! ' : '')) + 'Te faltan ' + j.faltan + ' puntos para el siguiente nivel.';
+    ['marcador', 'barraNivel', 'mFaltan'].forEach(function (id) { $(id).classList.remove('oculto'); });
+  }
+
+  function festejar() {
+    var emojis = ['🎉', '⭐', '🔥', '🏆', '✨', '🎊'];
+    for (var i = 0; i < 18; i++) {
+      (function (i) {
+        var s = document.createElement('span');
+        s.className = 'confeti';
+        s.textContent = emojis[i % emojis.length];
+        s.style.left = Math.round(Math.random() * 94) + 'vw';
+        s.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+        s.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(s);
+        setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 4200);
+      })(i);
+    }
+  }
+
   // ================= Mi mapa: ruta de aprendizaje del alumno =================
   function abrirMapa() {
     $('pantallaMateria').classList.add('oculto');
@@ -1043,6 +1131,7 @@
           '<div class="pp-mini">Resolvió sin ayuda: ' + e(s.aciertos) + ' · Lo explicó con sus palabras: ' + e(s.explico) + '</div>' +
           (s.logro ? '<div style="margin-top:6px">🌟 ' + e(s.logro) + '</div>' : '') +
           (s.dificultad ? '<div>🎯 Le costó: ' + e(s.dificultad) + '</div>' : '') +
+          (s.enfoque ? '<div class="pp-mini">Enfoque en la sesión: ' + e(s.enfoque) + '</div>' : '') +
           (s.pregunta ? '<div>💬 Pregúntenle: ' + e(s.pregunta) + '<div class="pp-mini">Debería contestar: ' + e(s.respuesta) + '</div></div>' : '') +
           ppSiNo(s, 'arranco', '¿Arrancó solo, sin que se lo pidieran?') + ppSiNo(s, 'tarjeta', '¿Le hicieron la pregunta?') + '</div>';
       }).join('') : '<div class="pp-card pp-mini">Todavía no hay sesiones.</div>';
