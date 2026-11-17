@@ -127,6 +127,44 @@
   #panelPapas td, #panelPapas th { text-align:left; padding:6px 4px; border-top:1px solid #2c3260; }
   #panelPapas th { color:var(--suave); border-top:0; }
   @media (max-width:420px) { .pp-kpis { grid-template-columns:repeat(2,1fr); } }
+
+  /* --- Materiales visuales del tutor --- */
+  .vz { align-self: stretch; background: var(--panel); border: 1px solid #2c3260; border-radius: 16px; padding: 12px; }
+  .vz h3 { margin: 0 0 10px; font-size: 15px; color: var(--ambar); }
+  .vz-centro { background: var(--violeta); color: #fff; font-weight: 700; text-align: center; padding: 10px; border-radius: 12px; margin: 0 auto 6px; max-width: 80%; }
+  .vz-tronco { width: 3px; height: 14px; background: #4a4f85; margin: 0 auto; }
+  .vz-ramas { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; border-top: 3px solid #4a4f85; padding-top: 10px; }
+  .vz-rama { background: var(--fondo); border-radius: 12px; padding: 8px; border-top: 4px solid var(--teal); }
+  .vz-rama:nth-child(2n) { border-top-color: var(--ambar); } .vz-rama:nth-child(3n) { border-top-color: #ff6fb5; }
+  .vz-rama b { display: block; margin-bottom: 4px; } .vz-rama div { font-size: 14px; color: var(--suave); padding: 2px 0; }
+  .vz-paso { background: var(--fondo); border-radius: 12px; padding: 9px 12px; display: flex; gap: 10px; align-items: flex-start; }
+  .vz-paso i { font-style: normal; background: var(--teal); color: #04201d; font-weight: 700; border-radius: 50%; min-width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+  .vz-flecha { text-align: center; color: #4a4f85; line-height: 1; padding: 2px 0; }
+  .vz-linea { border-left: 3px solid #4a4f85; margin-left: 8px; padding-left: 14px; }
+  .vz-evento { position: relative; padding: 4px 0 10px; }
+  .vz-evento:before { content: ''; position: absolute; left: -22px; top: 8px; width: 13px; height: 13px; border-radius: 50%; background: var(--ambar); }
+  .vz-evento b { color: var(--ambar); display: block; font-size: 14px; }
+  .vz-tarjeta { background: var(--fondo); border: 2px dashed #4a4f85; border-radius: 14px; min-height: 110px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 14px; font-size: 17px; cursor: pointer; }
+  .vz-tarjeta.reverso { border-style: solid; border-color: var(--teal); }
+  .vz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; color: var(--suave); font-size: 13px; }
+  .vz-btn { background: #262b52; color: var(--texto); padding: 8px 12px; font-size: 14px; }
+  .vz-op { display: block; width: 100%; text-align: left; background: var(--fondo); color: var(--texto); border: 1px solid #2c3260; padding: 10px 12px; margin-top: 6px; font-size: 15px; }
+  .vz-op.bien { background: #12453d; border-color: var(--teal); } .vz-op.mal { background: #4a1f2b; border-color: #ff5d73; }
+  .vz-porque { margin-top: 8px; font-size: 14px; color: var(--suave); }
+  .vz table { width: 100%; border-collapse: collapse; font-size: 14px; } .vz th { color: var(--ambar); text-align: left; }
+  .vz td, .vz th { padding: 6px; border-top: 1px solid #2c3260; vertical-align: top; }
+  /* --- Mi mapa --- */
+  #pantallaMapa { flex: 1; overflow-y: auto; padding: 12px 14px 30px; }
+  .mp-materia { background: var(--panel); border: 1px solid #2c3260; border-radius: 14px; padding: 12px; margin-top: 10px; }
+  .mp-materia h3 { margin: 0 0 8px; font-size: 16px; }
+  .mp-ruta { border-left: 3px solid #4a4f85; margin-left: 9px; }
+  .mp-tema { position: relative; display: block; width: 100%; text-align: left; background: transparent; color: var(--texto); padding: 7px 8px 7px 20px; font-size: 15px; border-radius: 8px; }
+  .mp-tema:before { content: ''; position: absolute; left: -9px; top: 11px; width: 15px; height: 15px; border-radius: 50%; background: #6b7199; border: 2px solid var(--panel); }
+  .mp-tema.practicando:before { background: var(--ambar); } .mp-tema.dominado:before { background: var(--teal); } .mp-tema.repasar:before { background: #ff6fb5; }
+  .mp-tema small { color: var(--suave); display: block; }
+  .mp-leyenda { font-size: 13px; color: var(--suave); margin: 8px 0; }
+  .extras { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 420px; }
+  .extra { background: #262b52; color: var(--texto); padding: 12px 8px; font-weight: 600; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -192,6 +230,7 @@
   <!-- Materia -->
   <div id="pantallaMateria" class="centro oculto">
     <div id="saludo" style="font-size:18px"></div>
+    <div id="agenda" class="estado-txt" style="max-width:420px"></div>
     <div id="continuar" class="oculto" style="width:100%;max-width:420px">
       <button class="primario" style="width:100%" onclick="continuarSesion()" id="btnContinuar">▶ Continuar</button>
       <div class="estado-txt" style="margin-top:6px">o elige una materia para empezar otra sesión</div>
@@ -204,7 +243,14 @@
       <button class="chip" onclick="iniciar('Inglés')">🗣️ Inglés</button>
       <button class="chip" onclick="iniciar('Otra materia')">📚 Otra materia</button>
     </div>
+    <div class="extras">
+      <button class="extra" onclick="iniciar('Repaso del día', 'Hola, quiero contarte qué vi hoy en la escuela.')">📒 ¿Qué vi hoy?</button>
+      <button class="extra" onclick="abrirMapa()">🗺️ Mi mapa</button>
+    </div>
   </div>
+
+  <!-- Mi mapa -->
+  <div id="pantallaMapa" class="oculto"></div>
 
   <!-- Chat -->
   <div id="pantallaChat" class="oculto" style="display:flex;flex-direction:column;flex:1;min-height:0">
@@ -308,6 +354,10 @@
         try { localStorage.setItem('tutor_pin', pin); } catch (e) {}
         $('nombreTutor').textContent = estado.tutor;
         $('saludo').textContent = '¡Hola, ' + r.alumno.split(' ')[0] + '! ¿Qué estudiamos hoy? 🟡';
+        var hz = r.horario;
+        $('agenda').textContent = (hz && hz.siguiente)
+          ? '📅 ' + (hz.siguiente.enDias === 1 ? 'Mañana (' + hz.siguiente.dia + ')' : 'El ' + hz.siguiente.dia) + ' tienes: ' + hz.siguiente.materias.join(', ')
+          : '';
         estado.activa = r.activa || null;
         if (estado.activa) {
           $('btnContinuar').textContent = '▶ Continuar ' + estado.activa.materia + ' donde te quedaste';
@@ -340,23 +390,25 @@
     estado.materia = a.materia; estado.sesionId = a.sesionId; estado.terminada = false;
     estado.mensajes = a.mensajes.map(function (m) { return { role: m.role, text: m.text }; });
     estado.activa = null; $('continuar').classList.add('oculto');
+    estado.restaurando = true;
     $('chat').innerHTML = '';
     estado.mensajes.forEach(function (m, i) {
       if (i === 0) return; // el saludo automático no se muestra
       pintar(m.role === 'user' ? 'yo' : 'tutor', m.text.replace(/^\[voz\] /, '🎤 '));
     });
+    estado.restaurando = false;
     abrirChat(a.materia);
     ponerEstado('', 'Seguimos donde nos quedamos');
   }
 
-  function iniciar(materia) {
+  function iniciar(materia, primerMensaje) {
     if (estado.activa) { estado.activa = null; $('continuar').classList.add('oculto'); google.script.run.descartarSesionActiva(estado.pin); }
     estado.materia = materia;
     estado.sesionId = String(Date.now());
     estado.mensajes = [];
     estado.terminada = false;
     abrirChat(materia);
-    mandar('Hola, quiero estudiar ' + materia + '.', null, false);
+    mandar(primerMensaje || ('Hola, quiero estudiar ' + materia + '.'), null, false);
   }
 
   function enviar() {
@@ -425,15 +477,147 @@
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  /** Separa el texto normal de los bloques <<<VISUAL {...} VISUAL>>> que dibuja la app. */
+  function partirVisuales(texto) {
+    var partes = [], re = /<<<VISUAL([\s\S]*?)VISUAL>>>/g, ult = 0, m;
+    while ((m = re.exec(texto)) !== null) {
+      if (m.index > ult) partes.push({ txt: texto.slice(ult, m.index) });
+      try { partes.push({ vis: JSON.parse(m[1].trim()) }); } catch (e) {}
+      ult = re.lastIndex;
+    }
+    if (ult < texto.length) partes.push({ txt: texto.slice(ult) });
+    return partes;
+  }
+
   function pintar(quien, texto, foto) {
-    var div = document.createElement('div');
-    div.className = 'msg ' + quien;
-    var html = '';
-    if (foto) html += '<img src="data:image/jpeg;base64,' + foto + '">';
-    html += escapar(texto || '').replace(/\(ES:\s*/g, '(').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-    div.innerHTML = html;
-    $('chat').appendChild(div);
+    var partes = partirVisuales(texto || '');
+    if (!partes.length) partes = [{ txt: '' }];
+    partes.forEach(function (p, i) {
+      if (p.vis) { var v = dibujarVisual(p.vis); if (v) $('chat').appendChild(v); return; }
+      var limpio = p.txt.trim();
+      if (!limpio && !(foto && i === 0)) return;
+      var div = document.createElement('div');
+      div.className = 'msg ' + quien;
+      var html = '';
+      if (foto && i === 0) html += '<img src="data:image/jpeg;base64,' + foto + '">';
+      html += escapar(limpio).replace(/\(ES:\s*/g, '(').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+      div.innerHTML = html;
+      $('chat').appendChild(div);
+    });
     $('chat').scrollTop = $('chat').scrollHeight;
+  }
+
+  // --- Materiales visuales: mapa mental, pasos, línea de tiempo, tarjetas, quiz y tabla ---
+  function el(tag, clase, texto) {
+    var x = document.createElement(tag);
+    if (clase) x.className = clase;
+    if (texto != null) x.textContent = String(texto);
+    return x;
+  }
+
+  function dibujarVisual(v) {
+    if (!v || !v.tipo) return null;
+    var caja = el('div', 'vz');
+    var iconos = { mapa: '🧠', pasos: '🪜', linea: '🕰️', tarjetas: '🃏', quiz: '📝', tabla: '📊' };
+    caja.appendChild(el('h3', '', (iconos[v.tipo] || '') + ' ' + (v.titulo || '')));
+    var vivo = !estado.restaurando;
+
+    if (v.tipo === 'mapa') {
+      caja.appendChild(el('div', 'vz-centro', v.centro));
+      caja.appendChild(el('div', 'vz-tronco'));
+      var ramas = el('div', 'vz-ramas');
+      (v.ramas || []).forEach(function (r) {
+        var rama = el('div', 'vz-rama');
+        rama.appendChild(el('b', '', r.nombre));
+        (r.hijos || []).forEach(function (h) { rama.appendChild(el('div', '', '• ' + h)); });
+        ramas.appendChild(rama);
+      });
+      caja.appendChild(ramas);
+    } else if (v.tipo === 'pasos') {
+      (v.pasos || []).forEach(function (p, i) {
+        if (i) caja.appendChild(el('div', 'vz-flecha', '▼'));
+        var paso = el('div', 'vz-paso');
+        paso.appendChild(el('i', '', i + 1));
+        paso.appendChild(el('span', '', p));
+        caja.appendChild(paso);
+      });
+    } else if (v.tipo === 'linea') {
+      var linea = el('div', 'vz-linea');
+      (v.eventos || []).forEach(function (ev) {
+        var e1 = el('div', 'vz-evento');
+        e1.appendChild(el('b', '', ev.cuando));
+        e1.appendChild(el('span', '', ev.que));
+        linea.appendChild(e1);
+      });
+      caja.appendChild(linea);
+    } else if (v.tipo === 'tabla') {
+      var t = el('table'), cab = el('tr');
+      (v.columnas || []).forEach(function (c) { cab.appendChild(el('th', '', c)); });
+      t.appendChild(cab);
+      (v.filas || []).forEach(function (f) {
+        var tr = el('tr');
+        (f || []).forEach(function (c) { tr.appendChild(el('td', '', c)); });
+        t.appendChild(tr);
+      });
+      caja.appendChild(t);
+    } else if (v.tipo === 'tarjetas') {
+      var lista = v.tarjetas || [], idx = 0, vuelta = false;
+      if (!lista.length) return null;
+      var tarjeta = el('div', 'vz-tarjeta'), nav = el('div', 'vz-nav');
+      var atras = el('button', 'vz-btn', '◀'), cuenta = el('span'), sig = el('button', 'vz-btn', '▶');
+      var mostrar = function () {
+        tarjeta.textContent = vuelta ? lista[idx].reverso : lista[idx].frente;
+        tarjeta.className = 'vz-tarjeta' + (vuelta ? ' reverso' : '');
+        cuenta.textContent = (idx + 1) + ' de ' + lista.length + ' · toca la tarjeta para voltearla';
+      };
+      tarjeta.onclick = function () { vuelta = !vuelta; mostrar(); };
+      atras.onclick = function () { idx = (idx - 1 + lista.length) % lista.length; vuelta = false; mostrar(); };
+      sig.onclick = function () { idx = (idx + 1) % lista.length; vuelta = false; mostrar(); };
+      nav.appendChild(atras); nav.appendChild(cuenta); nav.appendChild(sig);
+      caja.appendChild(tarjeta); caja.appendChild(nav);
+      mostrar();
+    } else if (v.tipo === 'quiz') {
+      var pregs = v.preguntas || [], n = 0, buenas = 0, fallos = [];
+      if (!pregs.length) return null;
+      var zona = el('div');
+      caja.appendChild(zona);
+      var pregunta = function () {
+        zona.innerHTML = '';
+        if (n >= pregs.length) {
+          zona.appendChild(el('div', 'vz-centro', 'Resultado: ' + buenas + ' de ' + pregs.length));
+          if (vivo && !estado.ocupado && !estado.terminada) {
+            mandar('[quiz] "' + (v.titulo || 'Quiz') + '": acerté ' + buenas + ' de ' + pregs.length + '.' +
+              (fallos.length ? ' Fallé: ' + fallos.join(' | ') : ' No fallé ninguna.'), null, true,
+              '📝 Terminé el quiz: ' + buenas + ' de ' + pregs.length);
+          }
+          return;
+        }
+        var q = pregs[n];
+        zona.appendChild(el('div', '', (n + 1) + '. ' + q.p));
+        var contestada = false;
+        (q.opciones || []).forEach(function (op, i) {
+          var b = el('button', 'vz-op', op);
+          b.onclick = function () {
+            if (contestada) return;
+            contestada = true;
+            var ok = i === Number(q.correcta);
+            b.classList.add(ok ? 'bien' : 'mal');
+            if (ok) buenas++; else { fallos.push(q.p); zona.querySelectorAll('.vz-op')[Number(q.correcta)].classList.add('bien'); }
+            if (q.porque) zona.appendChild(el('div', 'vz-porque', (ok ? '✅ ' : '💡 ') + q.porque));
+            var s = el('button', 'vz-btn', n + 1 < pregs.length ? 'Siguiente ▶' : 'Ver resultado');
+            s.style.marginTop = '8px';
+            s.onclick = function () { n++; pregunta(); };
+            zona.appendChild(s);
+            $('chat').scrollTop = $('chat').scrollHeight;
+          };
+          zona.appendChild(b);
+        });
+      };
+      pregunta();
+    } else {
+      return null;
+    }
+    return caja;
   }
 
   // --- Voz del tutor: voz natural (Google Cloud) y, si no está configurada, la del navegador ---
@@ -474,7 +658,7 @@
       if (final === 'celebra') setTimeout(function () { if (turno === estado.turnoVoz) ponerEstado('', 'Te escucho'); }, 2000);
       if (final === 'comiendo') setTimeout(function () { if (turno === estado.turnoVoz) ponerEstado('', 'Te escucho'); }, 2500);
     };
-    var segmentos = segmentar(texto);
+    var segmentos = segmentar(texto.replace(/<<<VISUAL[\s\S]*?VISUAL>>>/g, ' '));
     if (!estado.voz || !segmentos.length) { alTerminar(); return; }
     if (!estado.vozNatural) { hablarNavegador(segmentos, turno, alTerminar); return; }
 
@@ -679,8 +863,59 @@
   });
   $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') entrar(); });
 
+  // ================= Mi mapa: ruta de aprendizaje del alumno =================
+  function abrirMapa() {
+    $('pantallaMateria').classList.add('oculto');
+    $('cabecera').classList.add('oculto');
+    $('pantallaMapa').classList.remove('oculto');
+    $('pantallaMapa').innerHTML = '<p class="mp-leyenda">Cargando tu mapa…</p>';
+    google.script.run.withSuccessHandler(pintarMapa)
+      .withFailureHandler(function () { $('pantallaMapa').innerHTML = '<p class="mp-leyenda">No pude cargar tu mapa. Intenta de nuevo.</p>'; })
+      .mapaAlumno(estado.pin);
+  }
+  function cerrarMapa() {
+    $('pantallaMapa').classList.add('oculto');
+    $('cabecera').classList.remove('oculto');
+    $('pantallaMateria').classList.remove('oculto');
+  }
+  function pintarMapa(d) {
+    var caja = $('pantallaMapa');
+    caja.innerHTML = '';
+    var arriba = el('div', 'pp-top');
+    var tit = el('div');
+    tit.appendChild(el('div', 'nombre', '🗺️ Mi mapa'));
+    tit.appendChild(el('div', 'mp-leyenda', d.total ? ('Llevas ' + d.dominados + ' de ' + d.total + ' temas dominados') : 'Aquí aparecerá todo lo que vayas aprendiendo'));
+    var volver = el('button', 'vz-btn', '← Volver');
+    volver.onclick = cerrarMapa;
+    arriba.appendChild(tit); arriba.appendChild(volver);
+    caja.appendChild(arriba);
+    caja.appendChild(el('div', 'mp-leyenda', '⚪ visto en clase · 🟡 practicando · 🟢 dominado · 🩷 toca repasar. Toca un tema para practicarlo.'));
+    if (!d.materias.length) {
+      caja.appendChild(el('div', 'mp-materia', 'Todavía no hay temas. Cuéntale a tu tutor qué viste hoy y tu mapa empezará a crecer.'));
+      return;
+    }
+    var textos = { visto: 'visto en clase', practicando: 'practicando', dominado: 'dominado', repasar: 'toca repasar' };
+    d.materias.forEach(function (m) {
+      var bloque = el('div', 'mp-materia');
+      bloque.appendChild(el('h3', '', m.nombre));
+      var ruta = el('div', 'mp-ruta');
+      m.temas.forEach(function (t) {
+        var b = el('button', 'mp-tema ' + t.estado, t.tema);
+        b.appendChild(el('small', '', textos[t.estado] || t.estado));
+        b.onclick = function () {
+          $('pantallaMapa').classList.add('oculto');
+          $('cabecera').classList.remove('oculto');
+          iniciar(m.nombre, 'Hola, quiero practicar este tema de ' + m.nombre + ': ' + t.tema + '.');
+        };
+        ruta.appendChild(b);
+      });
+      bloque.appendChild(ruta);
+      caja.appendChild(bloque);
+    });
+  }
+
   // ================= Panel de papás =================
-  var pp = { datos: null, tab: 'resumen' };
+  var pp = { datos: null, tab: 'resumen', pronostico: null };
   function e(x) { return escapar(x == null ? '' : x).replace(/"/g, '&quot;'); }
   function ppFecha(f) {
     if (!f) return '';
@@ -713,7 +948,7 @@
     var d = pp.datos, w = d.semana, h = '';
     h += '<div class="pp-top"><div><h1>' + e(d.alumno) + '</h1><div class="pp-mini">Panel de papás · ' + ppFecha(d.hoy) + '</div></div>' +
       '<div><button class="pp-btn" onclick="ppCargar()">↻</button> <button class="pp-btn" onclick="ppSalir()">Salir</button></div></div>';
-    var tabs = [['resumen', 'Resumen'], ['materias', 'Por materia'], ['pendientes', 'Pendientes (' + (d.vencidos.length + d.proximos.length) + ')'], ['sesiones', 'Sesiones'], ['boleta', 'Boleta']];
+    var tabs = [['resumen', 'Resumen'], ['materias', 'Por materia'], ['temas', 'Temas y exámenes'], ['pendientes', 'Tareas (' + (d.vencidos.length + d.proximos.length) + ')'], ['sesiones', 'Sesiones'], ['horario', 'Horario'], ['boleta', 'Boleta']];
     h += '<div class="pp-tabs">' + tabs.map(function (t) {
       return '<button class="pp-tab ' + (pp.tab === t[0] ? 'activa' : '') + '" onclick="ppTab(\'' + t[0] + '\')">' + t[1] + '</button>';
     }).join('') + '</div>';
@@ -749,7 +984,52 @@
       }).join('') : '<div class="pp-card pp-mini">Aparecerá cuando haya boleta, pendientes o sesiones.</div>';
     }
 
+    if (pp.tab === 'temas') {
+      var txtEstado = { visto: '⚪ visto en clase', practicando: '🟡 practicando', dominado: '🟢 dominado', repasar: '🩷 toca repasar' };
+      h += '<div class="pp-card"><h2>🔮 Lo que probablemente viene</h2>';
+      if (!pp.pronostico) {
+        h += '<p class="pp-mini">Estimación hecha con IA a partir de los temas que ha visto y los avisos del colegio. Sirve para anticiparse, no sustituye lo que diga el maestro.</p>' +
+          '<button class="pp-btn" onclick="ppPronostico(false)">Ver pronóstico</button>';
+      } else if (pp.pronostico.cargando) {
+        h += '<p class="pp-mini">Generando el pronóstico… tarda unos segundos.</p>';
+      } else if (pp.pronostico.error) {
+        h += '<p class="pp-rojo">' + e(pp.pronostico.error) + '</p><button class="pp-btn" onclick="ppPronostico(true)">Reintentar</button>';
+      } else if (pp.pronostico.vacio) {
+        h += '<p class="pp-mini">Todavía no hay temas ni avisos suficientes para estimar. Aparecerá cuando el tutor registre lo que ve en clase.</p>';
+      } else {
+        h += (pp.pronostico.materias || []).map(function (m) {
+          return '<div class="pp-item"><span class="pp-tag">' + e(m.nombre) + '</span>' +
+            ((m.examen || []).length ? '<div style="margin-top:6px"><b>📝 Candidatos a examen</b>' + m.examen.map(function (x) {
+              return '<div>• ' + e(x.tema) + (x.razon ? ' <span class="pp-mini">— ' + e(x.razon) + '</span>' : '') + '</div>'; }).join('') + '</div>' : '') +
+            ((m.siguientes || []).length ? '<div style="margin-top:6px"><b>➡️ Probablemente sigue</b>' + m.siguientes.map(function (x) {
+              return '<div>• ' + e(x) + '</div>'; }).join('') + '</div>' : '') +
+            (m.nota ? '<div class="pp-mini" style="margin-top:4px">' + e(m.nota) + '</div>' : '') + '</div>';
+        }).join('') +
+          '<p class="pp-mini">Estimación generada el ' + e(pp.pronostico.generado || '') + '. El maestro puede llevar otro orden. <a href="#" style="color:#c9c2ff" onclick="ppPronostico(true);return false">Actualizar</a></p>';
+      }
+      h += '</div>';
+      h += '<div class="pp-card"><h2>Temas que ha visto</h2>' + ((d.temas || []).length ? d.temas.map(function (m) {
+        return '<div class="pp-item"><span class="pp-tag">' + e(m.nombre) + '</span>' + m.temas.map(function (t) {
+          return '<div class="pp-fila" style="margin-top:4px"><span>' + e(t.tema) + '</span><span class="pp-mini" style="white-space:nowrap">' + (txtEstado[t.estado] || e(t.estado)) + ' · ' + ppFecha(t.ultima) + '</span></div>';
+        }).join('') + '</div>';
+      }).join('') : '<div class="pp-mini">Aparecerán conforme le cuente al tutor qué vio en clase.</div>') + '</div>';
+    }
+
     if (pp.tab === 'pendientes') {
+      var nivel = function (n) { return n === 'bien' ? '🟢 bien' : (n === 'regular' ? '🟡 regular' : (n === 'falta' ? '🔴 falta' : '⚪ no se ve')); };
+      if ((d.revisiones || []).length) {
+        h += '<div class="pp-card"><h2>Revisión de tareas (por foto)</h2>' + d.revisiones.map(function (r) {
+          return '<div class="pp-item"><span class="pp-tag">' + e(r.materia) + '</span> <span class="pp-mini">' + ppFecha(r.fecha) + '</span><br><b>' + e(r.tarea) + '</b>' +
+            '<div>1. Contenido: ' + nivel(r.contenido) + (r.notaContenido ? ' <span class="pp-mini">— ' + e(r.notaContenido) + '</span>' : '') + '</div>' +
+            '<div>2. Cuaderno o libro correcto: ' + nivel(r.lugar) + (r.notaLugar ? ' <span class="pp-mini">— ' + e(r.notaLugar) + '</span>' : '') + '</div>' +
+            '<div>3. Letra y presentación: ' + nivel(r.presentacion) + (r.notaPresentacion ? ' <span class="pp-mini">— ' + e(r.notaPresentacion) + '</span>' : '') + '</div>' +
+            (r.comentario ? '<div class="pp-mini">Mejora sugerida: ' + e(r.comentario) + '</div>' : '') + '</div>';
+        }).join('') + '<p class="pp-mini">Es una revisión rápida del tutor a partir de una foto; no sustituye la calificación del maestro.</p></div>';
+      }
+      if ((d.entregados || []).length) {
+        h += '<div class="pp-card"><h2>Dice que ya lo entregó</h2>' + d.entregados.map(function (x) { return ppPendiente(x, false); }).join('') +
+          '<p class="pp-mini">Lo reportó él en una sesión. Toca "Hecho" si lo confirmas.</p></div>';
+      }
       h += '<div class="pp-card"><h2>Vencidos</h2>' + (d.vencidos.length ? d.vencidos.map(function (x) { return ppPendiente(x, true); }).join('') : '<div class="pp-mini">Ninguno. 👍</div>') + '</div>';
       h += '<div class="pp-card"><h2>Próximos</h2>' + (d.proximos.length ? d.proximos.map(function (x) { return ppPendiente(x, false); }).join('') : '<div class="pp-mini">Sin entregas con fecha.</div>') + '</div>';
       if (d.sinFecha.length) h += '<div class="pp-card"><h2>Avisos sin fecha</h2>' + d.sinFecha.map(function (x) { return ppPendiente(x, false); }).join('') + '</div>';
@@ -768,6 +1048,25 @@
       }).join('') : '<div class="pp-card pp-mini">Todavía no hay sesiones.</div>';
     }
 
+    if (pp.tab === 'horario') {
+      var ag = d.agenda;
+      if (ag && ag.siguiente) {
+        h += '<div class="pp-card"><h2>📅 Para preparar</h2><div>' + (ag.siguiente.enDias === 1 ? 'Mañana (' + e(ag.siguiente.dia) + ')' : 'El ' + e(ag.siguiente.dia)) +
+          ' tiene: <b>' + ag.siguiente.materias.map(e).join(', ') + '</b></div>' +
+          '<p class="pp-mini">El tutor le recuerda estas materias y le pregunta si ya tiene lista la tarea y el material.</p></div>';
+      }
+      h += '<div class="pp-card"><h2>Horario de clases</h2>' + ((d.horario || []).length ? d.horario.map(function (dia) {
+        return '<div class="pp-item"><span class="pp-tag">' + e(dia.dia) + '</span>' + dia.clases.map(function (c) {
+          return '<div class="pp-fila" style="margin-top:3px"><span>' + e(c.materia) + (c.notas ? ' <span class="pp-amarillo">(' + e(c.notas) + ')</span>' : '') + '</span><span class="pp-mini" style="white-space:nowrap">' + e(c.hora) + '</span></div>';
+        }).join('') + '</div>';
+      }).join('') : '<div class="pp-mini">Todavía no hay horario cargado.</div>') + '</div>';
+      h += '<div class="pp-card"><h2>' + ((d.horario || []).length ? 'Cambiar el horario' : 'Cargar el horario') + '</h2>' +
+        '<p class="pp-mini">Sube una foto clara o el PDF del horario y la IA lo lee. Reemplaza al horario anterior. También puedes corregirlo a mano en la pestaña "Horario" de la hoja de cálculo.</p>' +
+        '<input type="file" id="ppArchivoHorario" accept="image/*,application/pdf" class="oculto" onchange="ppSubirHorario(event)">' +
+        '<button class="pp-btn" onclick="document.getElementById(\'ppArchivoHorario\').click()">📷 Subir foto o PDF</button>' +
+        '<div class="pp-mini" id="ppEstadoHorario" style="margin-top:6px">' + e(pp.msgHorario || '') + '</div></div>';
+    }
+
     if (pp.tab === 'boleta') {
       h += '<div class="pp-card"><h2>Calificaciones de la boleta</h2>' + (d.califs.length
         ? '<table><tr><th>Materia</th><th>Periodo</th><th>Calif.</th></tr>' + d.califs.map(function (c) {
@@ -777,6 +1076,45 @@
         : '<div class="pp-mini">Aparecerán cuando llegue una boleta por correo.</div>') + '</div>';
     }
     $('panelPapas').innerHTML = h;
+  }
+
+  function ppSubirHorario(ev) {
+    var archivo = ev.target.files && ev.target.files[0];
+    if (!archivo) return;
+    var enviar = function (tipo, datos) {
+      $('ppEstadoHorario').textContent = 'Leyendo el horario… tarda unos segundos.';
+      google.script.run.withSuccessHandler(function (r) {
+        pp.datos.horario = r.horario; pp.msgHorario = '✅ Horario cargado: ' + r.clases + ' clases. Revísalo y corrige en la hoja lo que diga "revisar".';
+        ppCargar();
+      }).withFailureHandler(function (er) {
+        pp.msgHorario = '⚠️ ' + ((er && er.message) || 'No se pudo leer el horario'); ppPintar();
+      }).cargarHorarioFoto(estado.pin, tipo, datos);
+    };
+    var lector = new FileReader();
+    if (archivo.type === 'application/pdf') {
+      lector.onload = function () { enviar('application/pdf', String(lector.result).split(',')[1]); };
+      lector.readAsDataURL(archivo);
+      return;
+    }
+    lector.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var max = 1800, w = img.width, hh = img.height;
+        if (w > max || hh > max) { var k = max / Math.max(w, hh); w = Math.round(w * k); hh = Math.round(hh * k); }
+        var c = document.createElement('canvas'); c.width = w; c.height = hh;
+        c.getContext('2d').drawImage(img, 0, 0, w, hh);
+        enviar('image/jpeg', c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      };
+      img.src = lector.result;
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  function ppPronostico(forzar) {
+    pp.pronostico = { cargando: true }; ppPintar();
+    google.script.run.withSuccessHandler(function (r) { pp.pronostico = r; ppPintar(); })
+      .withFailureHandler(function (er) { pp.pronostico = { error: (er && er.message) || 'No se pudo generar' }; ppPintar(); })
+      .pronosticoTemas(estado.pin, !!forzar);
   }
 
   function ppHecho(btn) {
